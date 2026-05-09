@@ -6,129 +6,222 @@
     <title>Cloud Learner Profiling</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --danger: #e74c3c; --light: #ecf0f1; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; color: var(--primary); }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .form-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; padding: 20px; background: var(--light); border-radius: 8px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { padding: 10px 18px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-add { background: var(--secondary); }
-        .status-indicator { font-size: 0.85em; font-style: italic; color: #666; margin-bottom: 10px; }
+        :root { 
+            --primary: #2c3e50; 
+            --secondary: #3498db; 
+            --success: #27ae60; 
+            --danger: #e74c3c; 
+            --light: #ecf0f1; 
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f4f7f6; 
+            padding: 20px; 
+            color: var(--primary); 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        h2 { text-align: center; margin-top: 0; }
+        .form-group { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+            padding: 20px; 
+            background: var(--light); 
+            border-radius: 8px; 
+        }
+        label { font-weight: bold; font-size: 0.9em; display: block; margin-bottom: 5px; }
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        button { 
+            padding: 10px 18px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: white; 
+            transition: 0.3s; 
+        }
+        .btn-add { background: var(--secondary); width: 100%; }
+        .btn-add:hover { background: #2980b9; }
+        .status-indicator { 
+            font-size: 0.85em; 
+            font-style: italic; 
+            color: #666; 
+            margin-bottom: 10px; 
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: var(--primary); color: white; }
         .flag-yes { color: var(--danger); font-weight: bold; }
         .loading-overlay { text-align: center; padding: 20px; font-weight: bold; }
+
+        @media print {
+            .form-group, .controls, .status-indicator { display: none; }
+        }
     </style>
 </head>
 <body onload="loadFromCloud()">
 
 <div class="container">
-    <h2 style="text-align:center">BOSY Cloud Dashboard</h2>
-    <div id="status" class="status-indicator">Connected to Cloud Database</div>
+    <h2>BOSY Learner Profiling Dashboard</h2>
+    <div id="status" class="status-indicator">Connecting to Google Sheets...</div>
     
     <div class="form-group">
-        <input type="text" id="name" placeholder="Learner Name">
-        <select id="reading">
-            <option value="Full Refresher">Full Refresher</option>
-            <option value="Moderate Refresher">Moderate Refresher</option>
-            <option value="Light Refresher">Light Refresher</option>
-            <option value="Grade Level Ready">Grade Level Ready</option>
-        </select>
-        <select id="math">
-            <option value="Low Numeracy">Low Numeracy</option>
-            <option value="Average">Average</option>
-            <option value="High Numeracy">High Numeracy</option>
-        </select>
-        <input type="text" id="notes" placeholder="Notes">
-        <button class="btn-add" onclick="saveToCloud()">Add & Sync</button>
+        <div>
+            <label>Learner Name</label>
+            <input type="text" id="name" placeholder="Enter Name">
+        </div>
+        <div>
+            <label>Reading (CRLA)</label>
+            <select id="reading">
+                <option value="Full Refresher">Full Refresher</option>
+                <option value="Moderate Refresher">Moderate Refresher</option>
+                <option value="Light Refresher">Light Refresher</option>
+                <option value="Grade Level Ready">Grade Level Ready</option>
+            </select>
+        </div>
+        <div>
+            <label>Math (RMA)</label>
+            <select id="math">
+                <option value="Low Numeracy">Low Numeracy</option>
+                <option value="Average">Average</option>
+                <option value="High Numeracy">High Numeracy</option>
+            </select>
+        </div>
+        <div>
+            <label>Notes</label>
+            <input type="text" id="notes" placeholder="e.g. Needs phonics help">
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+            <button class="btn-add" onclick="saveToCloud()">Add & Sync</button>
+        </div>
     </div>
 
-    <div style="margin-bottom: 15px;">
-        <button onclick="loadFromCloud()" style="background:#7f8c8d">🔄 Refresh Data</button>
-        <button onclick="exportToExcel()" style="background:#1f7244">Download Excel</button>
+    <div class="controls">
+        <button onclick="loadFromCloud()" style="background:#7f8c8d">🔄 Refresh Table</button>
+        <button onclick="exportToExcel()" style="background:#1f7244">📥 Download Excel</button>
+        <button onclick="window.print()" style="background:#34495e">🖨️ Print Report</button>
     </div>
 
     <table id="learnerTable">
         <thead>
             <tr>
                 <th>Learner Name</th>
-                <th>Reading</th>
-                <th>Math</th>
+                <th>Reading (CRLA)</th>
+                <th>Math (RMA)</th>
                 <th>Needs Support?</th>
                 <th>Notes</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="5" class="loading-overlay">Syncing with Google Sheets...</td></tr>
+            <tr><td colspan="5" class="loading-overlay">Syncing with Cloud...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // PASTE YOUR GOOGLE WEB APP URL HERE
-    const scriptURL = 'YOUR_COPIED_WEB_APP_URL_HERE';
+    // YOUR UNIQUE WEB APP URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxgA3ZeX5L05_tncm8ZJoCqKFHAQ3v48p076f1QN4YgUrGhOH2C5XkAk7wSUBM6ZTUj/exec';
 
+    // 1. SAVE DATA TO GOOGLE SHEETS
     async function saveToCloud() {
         const name = document.getElementById('name').value;
         const reading = document.getElementById('reading').value;
         const math = document.getElementById('math').value;
         const notes = document.getElementById('notes').value;
 
-        if (!name) return alert("Enter name.");
+        if (!name) return alert("Please enter a student name.");
         
         const needsSupport = (reading.includes("Refresher") || math === "Low Numeracy") ? "Yes" : "No";
         const learner = { name, reading, math, needsSupport, notes };
 
-        document.getElementById('status').innerText = "Saving to Google Sheets...";
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = "Saving to Google Sheets... please wait.";
+        statusDiv.style.color = "#3498db";
         
         try {
-            // Send data to Google Sheet
             await fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors', // Essential for Google Apps Script
+                mode: 'no-cors', 
                 body: JSON.stringify(learner)
             });
             
-            document.getElementById('status').innerText = "Sync Complete!";
+            statusDiv.innerText = "Data Synced Successfully!";
+            statusDiv.style.color = "#27ae60";
+            
+            // Clear inputs
             document.getElementById('name').value = '';
             document.getElementById('notes').value = '';
             
-            // Reload table after a short delay to allow Google to process
-            setTimeout(loadFromCloud, 1500);
+            // Reload table after a short delay
+            setTimeout(loadFromCloud, 2000);
         } catch (e) {
-            document.getElementById('status').innerText = "Sync Error: " + e.message;
+            statusDiv.innerText = "Error: " + e.message;
+            statusDiv.style.color = "#e74c3c";
         }
     }
 
+    // 2. FETCH DATA FROM GOOGLE SHEETS
     async function loadFromCloud() {
         const tableBody = document.getElementById('tableBody');
-        document.getElementById('status').innerText = "Fetching latest records...";
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = "Fetching latest records from Cloud...";
 
         try {
             const response = await fetch(scriptURL);
             const data = await response.json();
             
-            tableBody.innerHTML = "";
-            data.forEach(row => {
-                const tr = tableBody.insertRow();
-                tr.innerHTML = `
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td class="${row[3] === 'Yes' ? 'flag-yes' : ''}">${row[3]}</td>
-                    <td>${row[4]}</td>
-                `;
-            });
-            document.getElementById('status').innerText = "Cloud Sync Active (" + data.length + " students)";
+            tableBody.innerHTML = ""; // Clear existing rows
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No records found. Add your first student!</td></tr>";
+            } else {
+                data.forEach(row => {
+                    const tr = tableBody.insertRow();
+                    const supportClass = row[3] === 'Yes' ? 'flag-yes' : '';
+                    tr.innerHTML = `
+                        <td>${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td>${row[2]}</td>
+                        <td class="${supportClass}">${row[3]}</td>
+                        <td>${row[4]}</td>
+                    `;
+                });
+            }
+            statusDiv.innerText = "Cloud Sync Active: " + data.length + " students loaded.";
+            statusDiv.style.color = "#666";
         } catch (e) {
-            document.getElementById('status').innerText = "Offline Mode - Ready to load";
+            console.error(e);
+            statusDiv.innerText = "Unable to load data. Check your internet connection.";
+            statusDiv.style.color = "#e74c3c";
         }
     }
 
+    // 3. EXPORT TABLE TO EXCEL FILE
     function exportToExcel() {
-        const wb = XLSX.utils.table_to_book(document.getElementById("learnerTable"), { sheet: "BOSY" });
-        XLSX.writeFile(wb, "Cloud_BOSY_Export.xlsx");
+        const table = document.getElementById("learnerTable");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "BOSY Baseline" });
+        XLSX.writeFile(wb, "BOSY_Learner_Profiling.xlsx");
     }
 </script>
 
